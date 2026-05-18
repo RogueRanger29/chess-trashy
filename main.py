@@ -1,7 +1,7 @@
 import pygame
 import sys
 from helper import SIZE, FPS
-from board import draw_board, draw_pieces, set_click_state, test_set_overlayer, draw_overlay
+from board import draw_board, draw_pieces, set_click_state, move, draw_overlay
 pygame.init()
 
 screen = pygame.display.set_mode(SIZE)
@@ -19,7 +19,7 @@ while run:
     
     set_click_state(click)
     
-    test_set_overlayer()
+    move()
     draw_board(screen)
     draw_overlay(screen)
     draw_pieces(screen)
