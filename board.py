@@ -9,6 +9,15 @@ selected_row = -1
 selected_col = -1
 selected_piece = ""
 
+#stats for castle
+w_king_moved = 0
+w_l_rook_moved = 0
+w_r_rook_moved = 0
+
+b_king_moved = 0
+b_l_rook_moved = 0
+b_r_rook_moved = 0
+
 turn = "w"
 turns = 0
 
@@ -164,6 +173,141 @@ def check_legal_moves(r: int, c: int):
                 res.append((r-i, c))
                 break
             res.append((r-i, c))
+            
+    #bishop
+    if p.lower() == "b":
+        #check downright
+        for i in range(1,8):
+            if c+i > 7 or r+i>7 or r+i < 0 or c+i<0:
+                break
+            if colour(board[r+i][c+i]) == colour(p):
+                break
+            if (colour(board[r+i][c+i]) == "w" and colour(p) == "b") or (colour(board[r+i][c+i]) == "b" and colour(p) == "w"):
+                res.append((r+i, c+i))
+                break
+            res.append((r+i, c+i))
+            
+        #check downleft
+        for i in range(1,8):
+            if c-i > 7 or r+i>7 or r+i < 0 or c-i<0:
+                break
+            if colour(board[r+i][c-i]) == colour(p):
+                break
+            if (colour(board[r+i][c-i]) == "w" and colour(p) == "b") or (colour(board[r+i][c-i]) == "b" and colour(p) == "w"):
+                res.append((r+i, c-i))
+                break
+            res.append((r+i, c-i))
+            
+        #check upleft
+        for i in range(1,8):
+            if c-i > 7 or r-i>7 or r-i < 0 or c-i<0:
+                break
+            if colour(board[r-i][c-i]) == colour(p):
+                break
+            if (colour(board[r-i][c-i]) == "w" and colour(p) == "b") or (colour(board[r-i][c-i]) == "b" and colour(p) == "w"):
+                res.append((r-i, c-i))
+                break
+            res.append((r-i, c-i))
+            
+        #check upright
+        for i in range(1,8):
+            if c+i > 7 or r-i>7 or r-i < 0 or c+i<0:
+                break
+            if colour(board[r-i][c+i]) == colour(p):
+                break
+            if (colour(board[r-i][c+i]) == "w" and colour(p) == "b") or (colour(board[r-i][c+i]) == "b" and colour(p) == "w"):
+                res.append((r-i, c+i))
+                break
+            res.append((r-i, c+i))
+            
+    if p.lower == "q":
+        #check right
+        for i in range(1,8):
+            if c+i > 7:
+                break
+            if colour(board[r][c+i]) == colour(p):
+                break
+            if (colour(board[r][c+i]) == "w" and colour(p) == "b") or (colour(board[r][c+i]) == "b" and colour(p) == "w"):
+                res.append((r, c+i))
+                break
+            res.append((r, c+i))
+        
+        #check left
+        for i in range(1,8):
+            if c-i < 0:
+                break
+            if colour(board[r][c-i]) == colour(p):
+                break
+            if (colour(board[r][c-i]) == "w" and colour(p) == "b") or (colour(board[r][c-i]) == "b" and colour(p) == "w"):
+                res.append((r, c-i))
+                break
+            res.append((r, c-i))
+            
+        #check down
+        for i in range(1,8):
+            if r+i > 7:
+                break
+            if colour(board[r+i][c]) == colour(p):
+                break
+            if (colour(board[r+i][c]) == "w" and colour(p) == "b") or (colour(board[r+i][c]) == "b" and colour(p) == "w"):
+                res.append((r+i, c))
+                break
+            res.append((r+i, c))
+            
+        #check up
+        for i in range(1,8):
+            if r-i < 0:
+                break
+            if colour(board[r-i][c]) == colour(p):
+                break
+            if (colour(board[r-i][c]) == "w" and colour(p) == "b") or (colour(board[r-i][c]) == "b" and colour(p) == "w"):
+                res.append((r-i, c))
+                break
+            res.append((r-i, c))
+            
+        #check downright
+        for i in range(1,8):
+            if c+i > 7 or r+i>7 or r+i < 0 or c+i<0:
+                break
+            if colour(board[r+i][c+i]) == colour(p):
+                break
+            if (colour(board[r+i][c+i]) == "w" and colour(p) == "b") or (colour(board[r+i][c+i]) == "b" and colour(p) == "w"):
+                res.append((r+i, c+i))
+                break
+            res.append((r+i, c+i))
+            
+        #check downleft
+        for i in range(1,8):
+            if c-i > 7 or r+i>7 or r+i < 0 or c-i<0:
+                break
+            if colour(board[r+i][c-i]) == colour(p):
+                break
+            if (colour(board[r+i][c-i]) == "w" and colour(p) == "b") or (colour(board[r+i][c-i]) == "b" and colour(p) == "w"):
+                res.append((r+i, c-i))
+                break
+            res.append((r+i, c-i))
+            
+        #check upleft
+        for i in range(1,8):
+            if c-i > 7 or r-i>7 or r-i < 0 or c-i<0:
+                break
+            if colour(board[r-i][c-i]) == colour(p):
+                break
+            if (colour(board[r-i][c-i]) == "w" and colour(p) == "b") or (colour(board[r-i][c-i]) == "b" and colour(p) == "w"):
+                res.append((r-i, c-i))
+                break
+            res.append((r-i, c-i))
+            
+        #check upright
+        for i in range(1,8):
+            if c+i > 7 or r-i>7 or r-i < 0 or c+i<0:
+                break
+            if colour(board[r-i][c+i]) == colour(p):
+                break
+            if (colour(board[r-i][c+i]) == "w" and colour(p) == "b") or (colour(board[r-i][c+i]) == "b" and colour(p) == "w"):
+                res.append((r-i, c+i))
+                break
+            res.append((r-i, c+i))
     return res
 
                     
