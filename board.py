@@ -1,8 +1,10 @@
 import pygame
+import copy
 from helper import SQUARE_WIDTH, SQUARE_HEIGHT, LIGHT, DARK, DEFAULT_BOARD
 
-board = DEFAULT_BOARD.copy()
-overlayboard = [[0 for x in range(8)] for _ in range(8)]
+board = copy.deepcopy(DEFAULT_BOARD)
+selected_board = [[0 for x in range(8)] for _ in range(8)]
+highlighted_board = [[0 for x in range(8)] for _ in range(8)]
 clicking = False
 
 selected_row = -1
@@ -127,6 +129,20 @@ def check_legal_moves(r: int, c: int):
             if colour(board[move[0]][move[1]]) == colour(p): #ur own pieces
                 continue
             res.append(move)
+            
+        if colour(p) == "w":
+            if w_king_moved == 0:
+                if w_r_rook_moved == 0 and (7,5) in res and board[7][6] == " ":
+                    res.append((7,6))
+                if w_l_rook_moved == 0 and (7,3) in res and board[7][2] == " " and board[7][1] == " ":
+                    res.append((7, 2))
+                    
+        if colour(p) == "b":
+            if b_king_moved == 0:
+                if b_r_rook_moved == 0 and (0, 5) in res and board[0][6] == " ":
+                    res.append((0, 6))
+                if b_l_rook_moved == 0 and (0, 3) in res and board[0][2] == " " and board[0][1] == " ":
+                    res.append((0, 2))
     
     #rook
     if p.lower() == "r":
@@ -219,8 +235,9 @@ def check_legal_moves(r: int, c: int):
                 res.append((r-i, c+i))
                 break
             res.append((r-i, c+i))
-            
-    if p.lower == "q":
+    
+    #queen
+    if p.lower() == "q":
         #check right
         for i in range(1,8):
             if c+i > 7:
@@ -308,11 +325,11 @@ def check_legal_moves(r: int, c: int):
                 res.append((r-i, c+i))
                 break
             res.append((r-i, c+i))
+    
     return res
-
-                    
+    
 def move():
-    global selected_row, selected_col, selected_piece, turn, turns
+    global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, highlighted_board, selected_board
     if clicking:
         clicked_row = int(pygame.mouse.get_pos()[1]//SQUARE_HEIGHT)
         clicked_col = int(pygame.mouse.get_pos()[0]//SQUARE_WIDTH)
@@ -322,38 +339,90 @@ def move():
             if clicked_piece != " " and colour(clicked_piece) == turn: #check that there is a piece there and its ur turn
                 selected_row = clicked_row
                 selected_col = clicked_col
-                selected_piece=clicked_piece
                 selected_piece = clicked_piece
-                overlayboard[clicked_row][clicked_col] = 1
-                print(check_legal_moves(selected_row, selected_col))
+                selected_piece = clicked_piece
+                selected_board[clicked_row][clicked_col] = 1
+                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+                for move in check_legal_moves(selected_row, selected_col):
+                    highlighted_board[move[0]][move[1]] = 1
+
         else: #move/change selection
             if (clicked_row, clicked_col) == (selected_row, selected_col): #deselect piece
-                overlayboard[selected_row][selected_col] = 0
+                selected_board[selected_row][selected_col] = 0
+                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
                 selected_row = -1
                 selected_col = -1
                 selected_piece = ""
             
             elif colour(clicked_piece) == turn and clicked_piece != " ": #change selection
-                overlayboard[selected_row][selected_col] = 0
+                selected_board[selected_row][selected_col] = 0
                 selected_row = clicked_row
                 selected_col = clicked_col
                 selected_piece = clicked_piece
-                overlayboard[clicked_row][clicked_col] = 1
+                selected_board[clicked_row][clicked_col] = 1
+                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+                for move in check_legal_moves(selected_row, selected_col):
+                    highlighted_board[move[0]][move[1]] = 1
             
+            #move
             elif (clicked_row, clicked_col) in check_legal_moves(selected_row, selected_col): #check whether its empty space there or opponent colour
+                
+                if selected_piece == "K":
+                    if w_king_moved == 0 and (clicked_row, clicked_col) == (7, 6):
+                        board[7][7] = " "
+                        board[7][5] = "R"
+                        w_r_rook_moved = 1
+                    if w_king_moved == 0 and (clicked_row, clicked_col) == (7, 2):
+                        board[7][0] = " "
+                        board[7][3] = "R"
+                        w_l_rook_moved = 1
+                if selected_piece == "k":
+                    if b_king_moved == 0 and (clicked_row, clicked_col) == (0, 6):
+                        board[0][7] = " "
+                        board[0][5] = "r"
+                        b_r_rook_moved = 1
+                    if b_king_moved == 0 and (clicked_row, clicked_col) == (0, 2):
+                        board[0][0] = " "
+                        board[0][3] = "r"
+                        b_l_rook_moved = 1
+                
                 board[clicked_row][clicked_col] = selected_piece
                 board[selected_row][selected_col] = " "
-                overlayboard[selected_row][selected_col] = 0
+                selected_board[selected_row][selected_col] = 0
+                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+                
+                if selected_piece == "k": b_king_moved = 1
+                if selected_piece == "K": w_king_moved = 1
+                if selected_row == 7 and selected_col == 0: w_l_rook_moved = 1
+                if selected_row == 7 and selected_col == 7: w_r_rook_moved = 1
+                if selected_row == 0 and selected_col == 0: b_l_rook_moved = 1
+                if selected_row == 0 and selected_col == 7: b_r_rook_moved = 1
+                
                 selected_row = -1
                 selected_col = -1
                 selected_piece = ""
                 turn = "b" if turn=="w" else "w"
                 turns += 1
+                
+                print(f"{w_king_moved = }, {b_king_moved = }, {w_l_rook_moved = }, {w_r_rook_moved = }, {b_l_rook_moved = }, {b_r_rook_moved = }")
         
-def draw_overlay(screen: pygame.Surface):
-    for r, rank in enumerate(overlayboard):
+def draw_selected_overlay(screen: pygame.Surface):
+    overlay = pygame.Surface((SQUARE_WIDTH, SQUARE_HEIGHT), pygame.SRCALPHA)
+    overlay.fill((169, 123, 49, 191))
+
+    for r, rank in enumerate(selected_board):
         for c, v in enumerate(rank):
             if v:
-                rect = pygame.Rect(c*SQUARE_WIDTH, r*SQUARE_HEIGHT, SQUARE_WIDTH, SQUARE_HEIGHT)
-                pygame.draw.rect(screen, (255, 0, 0), rect)
+                screen.blit(overlay, (c*SQUARE_WIDTH, r*SQUARE_HEIGHT))
                 
+                
+def draw_highlighted_overlay(screen: pygame.Surface):
+    for r, rank in enumerate(highlighted_board):
+        for c, v in enumerate(rank):
+            if v:
+                if board[r][c] == " ":
+                    pygame.draw.circle(screen,(255, 0, 0), (c * SQUARE_WIDTH + SQUARE_WIDTH // 2, r * SQUARE_HEIGHT + SQUARE_HEIGHT // 2), SQUARE_WIDTH/7)
+                else:
+                    overlay_image = pygame.image.load('overlay/square.png').convert_alpha()
+                    overlay_image = pygame.transform.scale(overlay_image, (SQUARE_WIDTH, SQUARE_HEIGHT))
+                    screen.blit(overlay_image, (c * SQUARE_WIDTH, r * SQUARE_HEIGHT))
