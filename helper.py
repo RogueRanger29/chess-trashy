@@ -1,3 +1,6 @@
+import os
+import sys
+
 WIDTH = 800
 HEIGHT = 800
 FPS = 24
@@ -26,4 +29,11 @@ def fen_to_board(fen: str):
         res += [list(rank)]
     return res
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 DEFAULT_BOARD = fen_to_board(FEN)

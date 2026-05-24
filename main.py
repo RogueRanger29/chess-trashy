@@ -1,10 +1,11 @@
 import pygame
 import sys
 from helper import SIZE, FPS
-from board import draw_board, draw_pieces, set_click_state, move, draw_selected_overlay, draw_highlighted_overlay
+from board import draw_board, draw_pieces, set_click_state, move, draw_selected_overlay, draw_highlighted_overlay, get_mate
 pygame.init()
 
 window = pygame.display.set_mode(SIZE)
+pygame.display.set_caption("Chess(not that great)")
 screen = pygame.Surface(SIZE, pygame.SRCALPHA)
 clock = pygame.time.Clock()
 
@@ -28,6 +29,15 @@ while run:
     draw_highlighted_overlay(screen)
     draw_pieces(screen)
     window.blit(screen, (0, 0))
+    mate = get_mate()
+    if mate != "":
+        if mate == "d":
+            print("Stalemate")
+        if mate == "w":
+            print("Black Wins!")
+        if mate == 'b':
+            print("White Wins!")
+        run = False
     pygame.display.flip()
     clock.tick(FPS)
 pygame.quit()
