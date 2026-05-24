@@ -71,7 +71,7 @@ def check_black_check(board):
     if bc+1 < 8 and br+1<8:
         if board[br+1][bc+1] == "P":
             return "b"
-    if bc-1 >= 0 and br+1<0:
+    if bc-1 >= 0 and br+1<8:
         if board[br+1][bc-1] == "P":
             return "b"
         
@@ -741,6 +741,7 @@ def move():
                 turn = "b" if turn=="w" else "w"
                 turns += 1
                 mate = check_checkmate()
+                print(f"{check_black_check(board) = }, {check_white_check(board) = }")
                 
 def draw_selected_overlay(screen: pygame.Surface):
     overlay = pygame.Surface((SQUARE_WIDTH, SQUARE_HEIGHT), pygame.SRCALPHA)

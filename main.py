@@ -1,5 +1,6 @@
 import pygame
 import sys
+import time
 from helper import SIZE, FPS
 from board import draw_board, draw_pieces, set_click_state, move, draw_selected_overlay, draw_highlighted_overlay, get_mate
 pygame.init()
@@ -37,6 +38,7 @@ while run:
             print("Black Wins!")
         if mate == 'b':
             print("White Wins!")
+        pygame.time.wait(5000)
         run = False
     pygame.display.flip()
     clock.tick(FPS)
