@@ -657,11 +657,14 @@ def check_black_moves():
     return False
 
 def check_checkmate():
+    print(f"{check_black_moves() = }, {check_white_moves() = }")
     if not(check_white_moves()) and check_white_check(board) == "w":
         return "w"
     if not(check_black_moves()) and check_black_check(board) == "b":
         return "b"
-    if not(check_black_moves()) and not(check_white_moves()):
+    if turn == "w" and not check_white_moves():
+        return "d"
+    if turn == "b" and not check_black_moves():
         return "d"
     return ""
  

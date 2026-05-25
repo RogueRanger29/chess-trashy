@@ -12,9 +12,9 @@ SQUARE_HEIGHT = HEIGHT/8
 LIGHT = (238, 238, 210)
 DARK = (118, 150, 86)
 
-FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
-#FEN = 'rnbqkbnr/8/8/8/8/8/8/RNBQKBNR'
-
+FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR' #reg game
+#FEN = 'rnbqkbnr/8/8/8/8/8/8/RNBQKBNR' #pawnless
+#FEN = '8/8/8/4n3/3b3k/3b2p1/6P1/6K1' #stalemate pos
 
 def fen_to_board(fen: str):
     res = []

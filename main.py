@@ -20,7 +20,6 @@ clock = pygame.time.Clock()
 
 run = True
 
-
 while run:
     click = False
 
@@ -40,6 +39,8 @@ while run:
     draw_pieces(screen)
     window.blit(screen, (0, 0))
     mate = get_mate()
+    pygame.display.flip()
+    clock.tick(FPS)
     if mate != "":
         if mate == "d":
             print("Stalemate")
@@ -49,7 +50,5 @@ while run:
             print("White Wins!")
         pygame.time.wait(5000)
         run = False
-    pygame.display.flip()
-    clock.tick(FPS)
 pygame.quit()
 sys.exit()
