@@ -725,6 +725,23 @@ def move():
                 
                 board[clicked_row][clicked_col] = selected_piece
                 board[selected_row][selected_col] = " "
+                if selected_piece == "P":
+                    if clicked_row == 0:
+                        promo_options = ['q', 'n', 'r', 'b']
+                        print("q: queen\nn: knight\nr: rook\nb: bishop")
+                        inp = ''
+                        while inp.lower() not in promo_options:
+                            inp = input("Please select your choice: ")
+                        board[clicked_row][clicked_col] = inp.upper()
+                if selected_piece == "p":
+                    if clicked_row == 7:
+                        promo_options = ['q', 'n', 'r', 'b']
+                        print("q: queen\nn: knight\nr: rook\nb: bishop")
+                        inp = ''
+                        while inp.lower() not in promo_options:
+                            inp = input("Please select your choice: ")
+                        board[clicked_row][clicked_col] = inp.lower()
+                        
                 selected_board[selected_row][selected_col] = 0
                 highlighted_board = [[0 for x in range(8)] for _ in range(8)]
                 
@@ -741,7 +758,6 @@ def move():
                 turn = "b" if turn=="w" else "w"
                 turns += 1
                 mate = check_checkmate()
-                print(f"{check_black_check(board) = }, {check_white_check(board) = }")
                 
 def draw_selected_overlay(screen: pygame.Surface):
     overlay = pygame.Surface((SQUARE_WIDTH, SQUARE_HEIGHT), pygame.SRCALPHA)
