@@ -12,7 +12,7 @@ window_handlery = kernel.GetConsoleWindow()
 try:
     u32.ShowWindow(window_handlery, 9)
     u32.SetForegroundWindow(window_handlery)
-    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x001|0x0040)
+    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
 except:
     print("no console window handle found.")
 
@@ -36,14 +36,14 @@ window_handlery = pygame.display.get_wm_info()["window"]
 try:
     u32.ShowWindow(window_handlery, 9)
     u32.SetForegroundWindow(window_handlery)
-    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x001|0x0040)
+    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
 except:
     print("no console window handle found.")
 
-# print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
-# for i in range(3, 0, -1):
-#     print(i)
-#     time.sleep(1)
+print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
+for i in range(3, 0, -1):
+    print(i)
+    time.sleep(1)
 
 
 run = True
