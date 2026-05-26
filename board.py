@@ -729,22 +729,21 @@ def move():
                 board[selected_row][selected_col] = " "
 
                 if selected_piece.lower() == "p":
-                    # focus tab (console)
-                    import ctypes
-                    u32 = ctypes.WinDLL("user32")
-                    kernel = ctypes.WinDLL("kernel32")
-                    window_handlery = kernel.GetConsoleWindow()
-                    try:
-                        u32.ShowWindow(window_handlery, 9)
-                        u32.SetForegroundWindow(window_handlery)
-                        u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
-                    except:
-                        print("no console window handle found.")
-
-                    # others
-
                     if selected_piece == "P":
                         if clicked_row == 0:
+                            # focus tab (console)
+                            import ctypes
+                            u32 = ctypes.WinDLL("user32")
+                            kernel = ctypes.WinDLL("kernel32")
+                            window_handlery = kernel.GetConsoleWindow()
+                            try:
+                                u32.ShowWindow(window_handlery, 9)
+                                u32.SetForegroundWindow(window_handlery)
+                                u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
+                            except:
+                                print("no console window handle found.")
+
+                            # others
                             promo_options = ['q', 'n', 'r', 'b']
                             print("q: queen\nn: knight\nr: rook\nb: bishop")
                             inp = ''
@@ -753,6 +752,19 @@ def move():
                             board[clicked_row][clicked_col] = inp.upper()
                     if selected_piece == "p":
                         if clicked_row == 7:
+                            # focus tab (console)
+                            import ctypes
+                            u32 = ctypes.WinDLL("user32")
+                            kernel = ctypes.WinDLL("kernel32")
+                            window_handlery = kernel.GetConsoleWindow()
+                            try:
+                                u32.ShowWindow(window_handlery, 9)
+                                u32.SetForegroundWindow(window_handlery)
+                                u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
+                            except:
+                                print("no console window handle found.")
+
+                            # others
                             promo_options = ['q', 'n', 'r', 'b']
                             print("q: queen\nn: knight\nr: rook\nb: bishop")
                             inp = ''
