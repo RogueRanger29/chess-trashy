@@ -657,7 +657,6 @@ def check_black_moves():
     return False
 
 def check_checkmate():
-    print(f"{check_black_moves() = }, {check_white_moves() = }")
     if not(check_white_moves()) and check_white_check(board) == "w":
         return "w"
     if not(check_black_moves()) and check_black_check(board) == "b":
@@ -762,6 +761,7 @@ def move():
                 turns += 1
                 mate = check_checkmate()
                 
+
 def draw_selected_overlay(screen: pygame.Surface):
     overlay = pygame.Surface((SQUARE_WIDTH, SQUARE_HEIGHT), pygame.SRCALPHA)
     overlay.fill((169, 123, 49, 191))
