@@ -4,10 +4,23 @@ import time
 from helper import SIZE, FPS
 from board import draw_board, draw_pieces, set_click_state, move, draw_selected_overlay, draw_highlighted_overlay, get_mate
 
+# set to highest
+import ctypes
+u32 = ctypes.WinDLL("user32")
+kernel = ctypes.WinDLL("kernel32")
+window_handlery = kernel.GetConsoleWindow()
+try:
+    u32.ShowWindow(window_handlery, 9)
+    u32.SetForegroundWindow(window_handlery)
+    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x001|0x0040)
+except:
+    print("no console window handle found.")
+
 print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
-for i in range(5, 0, -1):
+for i in range(3, 0, -1):
     print(i)
     time.sleep(1)
+
 
 print("Enjoy!")
 
@@ -17,6 +30,21 @@ window = pygame.display.set_mode(SIZE)
 pygame.display.set_caption("Chess(not that great)")
 screen = pygame.Surface(SIZE, pygame.SRCALPHA)
 clock = pygame.time.Clock()
+
+# bring window to front (pygame)
+window_handlery = pygame.display.get_wm_info()["window"]
+try:
+    u32.ShowWindow(window_handlery, 9)
+    u32.SetForegroundWindow(window_handlery)
+    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x001|0x0040)
+except:
+    print("no console window handle found.")
+
+print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
+for i in range(3, 0, -1):
+    print(i)
+    time.sleep(1)
+
 
 run = True
 
