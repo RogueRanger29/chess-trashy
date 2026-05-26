@@ -12,7 +12,7 @@ window_handlery = kernel.GetConsoleWindow()
 try:
     u32.ShowWindow(window_handlery, 9)
     u32.SetForegroundWindow(window_handlery)
-    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x001|0x0040)
+    u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
 except:
     print("no console window handle found.")
 
