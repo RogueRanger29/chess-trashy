@@ -727,22 +727,47 @@ def move():
                 
                 board[clicked_row][clicked_col] = selected_piece
                 board[selected_row][selected_col] = " "
-                if selected_piece == "P":
-                    if clicked_row == 0:
-                        promo_options = ['q', 'n', 'r', 'b']
-                        print("q: queen\nn: knight\nr: rook\nb: bishop")
-                        inp = ''
-                        while inp.lower() not in promo_options:
-                            inp = input("Please select your choice: ")
-                        board[clicked_row][clicked_col] = inp.upper()
-                if selected_piece == "p":
-                    if clicked_row == 7:
-                        promo_options = ['q', 'n', 'r', 'b']
-                        print("q: queen\nn: knight\nr: rook\nb: bishop")
-                        inp = ''
-                        while inp.lower() not in promo_options:
-                            inp = input("Please select your choice: ")
-                        board[clicked_row][clicked_col] = inp.lower()
+
+                if selected_piece.lower() == "p":
+                    # focus tab (console)
+                    import ctypes
+                    u32 = ctypes.WinDLL("user32")
+                    kernel = ctypes.WinDLL("kernel32")
+                    window_handlery = kernel.GetConsoleWindow()
+                    try:
+                        u32.ShowWindow(window_handlery, 9)
+                        u32.SetForegroundWindow(window_handlery)
+                        u32.SetWindowPos(window_handlery, -1, 0,0,0,0, 0x0002|0x0001)
+                    except:
+                        print("no console window handle found.")
+
+                    # others
+
+                    if selected_piece == "P":
+                        if clicked_row == 0:
+                            promo_options = ['q', 'n', 'r', 'b']
+                            print("q: queen\nn: knight\nr: rook\nb: bishop")
+                            inp = ''
+                            while inp.lower() not in promo_options:
+                                inp = input("Please select your choice: ")
+                            board[clicked_row][clicked_col] = inp.upper()
+                    if selected_piece == "p":
+                        if clicked_row == 7:
+                            promo_options = ['q', 'n', 'r', 'b']
+                            print("q: queen\nn: knight\nr: rook\nb: bishop")
+                            inp = ''
+                            while inp.lower() not in promo_options:
+                                inp = input("Please select your choice: ")
+                            board[clicked_row][clicked_col] = inp.lower()
+
+                    # bring window to front (pygame)
+                    w = pygame.display.get_wm_info()["window"]
+                    try:
+                        u32.ShowWindow(w, 9)
+                        u32.SetForegroundWindow(w)
+                        u32.SetWindowPos(w, -1, 0,0,0,0, 0x0002|0x0001)
+                    except:
+                        print("no pygame window handle found.")
                         
                 selected_board[selected_row][selected_col] = 0
                 highlighted_board = [[0 for x in range(8)] for _ in range(8)]
