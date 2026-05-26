@@ -667,7 +667,7 @@ def check_checkmate():
         return "d"
     return ""
  
-def move():
+def move(w):
     global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, highlighted_board, selected_board, mate
     if clicking:
         clicked_row = int(pygame.mouse.get_pos()[1]//SQUARE_HEIGHT)
@@ -773,8 +773,10 @@ def move():
                             board[clicked_row][clicked_col] = inp.lower()
 
                     # bring window to front (pygame)
-                    w = pygame.display.get_wm_info()["window"]
                     try:
+                        import ctypes
+                        u32 = ctypes.WinDLL("user32")
+                        kernel = ctypes.WinDLL("kernel32")
                         u32.ShowWindow(w, 9)
                         u32.SetForegroundWindow(w)
                         u32.SetWindowPos(w, -1, 0,0,0,0, 0x0002|0x0001)

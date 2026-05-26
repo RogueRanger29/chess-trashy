@@ -41,7 +41,7 @@ while run:
     screen.fill((0, 0, 0, 0))
 
     set_click_state(click)
-    move()
+    move(pygame.display.get_wm_info()["window"])
     draw_board(screen)
     draw_selected_overlay(screen)
     draw_highlighted_overlay(screen)
