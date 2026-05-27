@@ -24,6 +24,9 @@ turn = "w"
 turns = 0
 mate = ""
 
+w_en_passant = None
+b_en_passant = None
+
 def set_click_state(click: bool):
     global clicking
     clicking = click
@@ -320,6 +323,9 @@ def check_legal_moves(r: int, c: int):
                     temp.append((r-1, c+1))
                 if c-1 >=0 and colour(board[r-1][c-1]) == "b":
                     temp.append((r-1, c-1))
+                    
+            if b_en_passant != None and r == 3 and abs(c-b_en_passant[1]) == 1:
+                temp.append(b_en_passant)
         if colour(p) == "b":  #checks for white pawn
             if r+1 <= 7: #checks that there is a spot above
                 #move conditons
@@ -334,6 +340,9 @@ def check_legal_moves(r: int, c: int):
                     temp.append((r+1, c+1))
                 if c-1 >=0 and colour(board[r+1][c-1]) == "w":
                     temp.append((r+1, c-1))
+                    
+            if w_en_passant != None and r == 4 and abs(c-w_en_passant[1]) == 1:
+                temp.append(w_en_passant)
         for move in temp:
             test_board = copy.deepcopy(board)
             test_board[r][c] = " "
@@ -657,7 +666,6 @@ def check_black_moves():
     return False
 
 def check_checkmate():
-    print(f"{check_black_moves() = }, {check_white_moves() = }")
     if not(check_white_moves()) and check_white_check(board) == "w":
         return "w"
     if not(check_black_moves()) and check_black_check(board) == "b":
@@ -669,7 +677,7 @@ def check_checkmate():
     return ""
  
 def move():
-    global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, highlighted_board, selected_board, mate
+    global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, highlighted_board, selected_board, mate, w_en_passant, b_en_passant
     if clicking:
         clicked_row = int(pygame.mouse.get_pos()[1]//SQUARE_HEIGHT)
         clicked_col = int(pygame.mouse.get_pos()[0]//SQUARE_WIDTH)
@@ -707,6 +715,18 @@ def move():
             #move
             elif (clicked_row, clicked_col) in check_legal_moves(selected_row, selected_col): #check whether its empty space there or opponent colour
                 
+                if selected_piece == "P":
+                    if selected_row - clicked_row == 2:
+                        w_en_passant = (clicked_row + 1, clicked_col)
+                    if (clicked_row, clicked_col) == b_en_passant:
+                        board[b_en_passant[0]+1][b_en_passant[1]] = " "
+                if selected_piece == "p":
+                    if selected_row - clicked_row == -2:
+                        b_en_passant = (clicked_row - 1, clicked_col)
+                    if (clicked_row, clicked_col) == w_en_passant:
+                        board[w_en_passant[0]-1][w_en_passant[1]] = " "
+                
+                
                 if selected_piece == "K":
                     if w_king_moved == 0 and (clicked_row, clicked_col) == (7, 6):
                         board[7][7] = " "
@@ -728,6 +748,8 @@ def move():
                 
                 board[clicked_row][clicked_col] = selected_piece
                 board[selected_row][selected_col] = " "
+                
+                #Promotion Logic
                 if selected_piece == "P":
                     if clicked_row == 0:
                         promo_options = ['q', 'n', 'r', 'b']
@@ -758,7 +780,12 @@ def move():
                 selected_row = -1
                 selected_col = -1
                 selected_piece = ""
-                turn = "b" if turn=="w" else "w"
+                if turn == "w":
+                    b_en_passant = None
+                    turn = "b"
+                elif turn == "b":
+                    w_en_passant = None
+                    turn = "w"
                 turns += 1
                 mate = check_checkmate()
                 

@@ -3,15 +3,15 @@ import sys
 import time
 from helper import SIZE, FPS
 from board import draw_board, draw_pieces, set_click_state, move, draw_selected_overlay, draw_highlighted_overlay, get_mate
-
+pygame.init()
 print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
-for i in range(5, 0, -1):
+for i in range(3, 0, -1):
     print(i)
     time.sleep(1)
 
 print("Enjoy!")
 
-pygame.init()
+
 
 window = pygame.display.set_mode(SIZE)
 pygame.display.set_caption("Chess(not that great)")
