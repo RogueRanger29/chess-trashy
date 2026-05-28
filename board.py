@@ -5,7 +5,6 @@ from helper import SQUARE_WIDTH, SQUARE_HEIGHT, LIGHT, DARK, DEFAULT_BOARD, reso
 board = copy.deepcopy(DEFAULT_BOARD)
 selected_board = [[0 for x in range(8)] for _ in range(8)]
 highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-clicking = False
 
 selected_row = -1
 selected_col = -1
@@ -27,9 +26,82 @@ mate = ""
 w_en_passant = None
 b_en_passant = None
 
-def set_click_state(click: bool):
-    global clicking
-    clicking = click
+promotion = None
+
+def get_event(event: pygame.event.Event):
+    if promotion != None:
+        if event.type == pygame.KEYDOWN:
+            key = event.key
+            if key == pygame.K_q:
+                handle_promotion("q")
+            if key == pygame.K_n:
+                handle_promotion("n")
+            if key == pygame.K_r:
+                handle_promotion("r")
+            if key == pygame.K_b:
+                handle_promotion("b")
+        return
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        clicked_row = int(pygame.mouse.get_pos()[1]//SQUARE_HEIGHT)
+        clicked_col = int(pygame.mouse.get_pos()[0]//SQUARE_WIDTH)
+        handle_selection(clicked_row, clicked_col)
+    else:
+        return
+def handle_selection(r, c):
+    global selected_row, selected_col, selected_piece, highlighted_board, selected_board
+    clicked_piece = board[r][c]
+    if selected_piece == "": #select piece if none selected
+        if clicked_piece != " " and colour(clicked_piece) == turn: #check that there is a piece there and its ur turn
+            selected_row = r
+            selected_col = c
+            selected_piece = clicked_piece
+            selected_board[r][c] = 1
+            highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+            for move in check_legal_moves(selected_row, selected_col):
+                highlighted_board[move[0]][move[1]] = 1
+        return
+    
+    if (r, c) == (selected_row, selected_col): #deselect piece
+        selected_board[selected_row][selected_col] = 0
+        highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+        selected_row = -1
+        selected_col = -1
+        selected_piece = ""
+        return
+            
+    if colour(clicked_piece) == turn and clicked_piece != " ": #change selection
+        selected_board[selected_row][selected_col] = 0
+        selected_row = r
+        selected_col = c
+        selected_piece = clicked_piece
+        selected_board[r][c] = 1
+        highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+        for move in check_legal_moves(selected_row, selected_col):
+            highlighted_board[move[0]][move[1]] = 1
+        return
+    
+    try_move(r, c)
+            
+def handle_promotion(choice: str):
+    global promotion, turn, turns, w_en_passant, b_en_passant, mate
+    if promotion == None:
+        return
+    p, r, c = promotion
+    if colour(p) == "w":
+        board[r][c] = choice.upper()
+    else:
+        board[r][c] = choice.lower()
+        
+    promotion = None
+    
+    if turn == "w" and promotion == None:
+        b_en_passant = None
+        turn = "b"
+    elif turn == "b" and promotion == None:
+        w_en_passant = None
+        turn = "w"
+    turns += 1
+    mate = check_checkmate()
 def draw_board(screen: pygame.Surface):    
     for row in range(8):
         for col in range(8):
@@ -408,16 +480,16 @@ def check_legal_moves(r: int, c: int):
         castle_moves = []
         if colour(p) == "w":
             if w_king_moved == 0 and check_white_check(board) == "":
-                if w_r_rook_moved == 0 and (7,5) in res and board[7][6] == " ":
+                if w_r_rook_moved == 0 and board[7][7] == "R" and (7,5) in res and board[7][6] == " ":
                     castle_moves.append((7,6))
-                if w_l_rook_moved == 0 and (7,3) in res and board[7][2] == " " and board[7][1] == " ":
+                if w_l_rook_moved == 0 and board[7][0] == "R" and (7,3) in res and board[7][2] == " " and board[7][1] == " ":
                     castle_moves.append((7, 2))
                     
         if colour(p) == "b":
             if b_king_moved == 0 and check_black_check(board) == "":
-                if b_r_rook_moved == 0 and (0, 5) in res and board[0][6] == " ":
+                if b_r_rook_moved == 0 and board[0][7] == "r" and (0, 5) in res and board[0][6] == " ":
                     castle_moves.append((0, 6))
-                if b_l_rook_moved == 0 and (0, 3) in res and board[0][2] == " " and board[0][1] == " ":
+                if b_l_rook_moved == 0 and board [0][0] == "r" and (0, 3) in res and board[0][2] == " " and board[0][1] == " ":
                     castle_moves.append((0, 2))
                     
         for move in castle_moves:
@@ -676,118 +748,79 @@ def check_checkmate():
         return "d"
     return ""
  
-def move():
-    global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, highlighted_board, selected_board, mate, w_en_passant, b_en_passant
-    if clicking:
-        clicked_row = int(pygame.mouse.get_pos()[1]//SQUARE_HEIGHT)
-        clicked_col = int(pygame.mouse.get_pos()[0]//SQUARE_WIDTH)
-        clicked_piece = board[clicked_row][clicked_col]
-        
-        if selected_piece == "": #select piece
-            if clicked_piece != " " and colour(clicked_piece) == turn: #check that there is a piece there and its ur turn
-                selected_row = clicked_row
-                selected_col = clicked_col
-                selected_piece = clicked_piece
-                selected_piece = clicked_piece
-                selected_board[clicked_row][clicked_col] = 1
-                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-                for move in check_legal_moves(selected_row, selected_col):
-                    highlighted_board[move[0]][move[1]] = 1
+def try_move(r, c):
+    global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, mate, w_en_passant, b_en_passant, selected_board, highlighted_board, promotion  
+    #move
+    if (r, c) in check_legal_moves(selected_row, selected_col): #check whether its empty space there or opponent colour
+        #Promotion Logic
+        if (selected_piece == "P" and r == 0) or (selected_piece == "p" and r == 7):
+            promotion = (selected_piece, r, c)
+            board[r][c] = selected_piece
+            board[selected_row][selected_col] = " "
 
-        else: #move/change selection
-            if (clicked_row, clicked_col) == (selected_row, selected_col): #deselect piece
-                selected_board[selected_row][selected_col] = 0
-                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-                selected_row = -1
-                selected_col = -1
-                selected_piece = ""
-            
-            elif colour(clicked_piece) == turn and clicked_piece != " ": #change selection
-                selected_board[selected_row][selected_col] = 0
-                selected_row = clicked_row
-                selected_col = clicked_col
-                selected_piece = clicked_piece
-                selected_board[clicked_row][clicked_col] = 1
-                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-                for move in check_legal_moves(selected_row, selected_col):
-                    highlighted_board[move[0]][move[1]] = 1
-            
-            #move
-            elif (clicked_row, clicked_col) in check_legal_moves(selected_row, selected_col): #check whether its empty space there or opponent colour
+            selected_row = -1
+            selected_col = -1
+            selected_piece = ""
+            selected_board = [[0 for _ in range(8)] for _ in range(8)]
+            highlighted_board = [[0 for _ in range(8)] for _ in range(8)]
+            return
+        if selected_piece == "P":
+            if selected_row - r == 2:
+                w_en_passant = (r + 1, c)
+            if (r, c) == b_en_passant:
+                board[b_en_passant[0]+1][b_en_passant[1]] = " "
+        if selected_piece == "p":
+            if selected_row - r == -2:
+                b_en_passant = (r - 1, c)
+            if (r, c) == w_en_passant:
+                board[w_en_passant[0]-1][w_en_passant[1]] = " "
+        
+        
+        if selected_piece == "K":
+            if w_king_moved == 0 and (r, c) == (7, 6):
+                board[7][7] = " "
+                board[7][5] = "R"
+                w_r_rook_moved = 1
+            if w_king_moved == 0 and (r, c) == (7, 2):
+                board[7][0] = " "
+                board[7][3] = "R"
+                w_l_rook_moved = 1
+        if selected_piece == "k":
+            if b_king_moved == 0 and (r, c) == (0, 6):
+                board[0][7] = " "
+                board[0][5] = "r"
+                b_r_rook_moved = 1
+            if b_king_moved == 0 and (r, c) == (0, 2):
+                board[0][0] = " "
+                board[0][3] = "r"
+                b_l_rook_moved = 1
+        
+        board[r][c] = selected_piece
+        board[selected_row][selected_col] = " "
+        
+        
                 
-                if selected_piece == "P":
-                    if selected_row - clicked_row == 2:
-                        w_en_passant = (clicked_row + 1, clicked_col)
-                    if (clicked_row, clicked_col) == b_en_passant:
-                        board[b_en_passant[0]+1][b_en_passant[1]] = " "
-                if selected_piece == "p":
-                    if selected_row - clicked_row == -2:
-                        b_en_passant = (clicked_row - 1, clicked_col)
-                    if (clicked_row, clicked_col) == w_en_passant:
-                        board[w_en_passant[0]-1][w_en_passant[1]] = " "
-                
-                
-                if selected_piece == "K":
-                    if w_king_moved == 0 and (clicked_row, clicked_col) == (7, 6):
-                        board[7][7] = " "
-                        board[7][5] = "R"
-                        w_r_rook_moved = 1
-                    if w_king_moved == 0 and (clicked_row, clicked_col) == (7, 2):
-                        board[7][0] = " "
-                        board[7][3] = "R"
-                        w_l_rook_moved = 1
-                if selected_piece == "k":
-                    if b_king_moved == 0 and (clicked_row, clicked_col) == (0, 6):
-                        board[0][7] = " "
-                        board[0][5] = "r"
-                        b_r_rook_moved = 1
-                    if b_king_moved == 0 and (clicked_row, clicked_col) == (0, 2):
-                        board[0][0] = " "
-                        board[0][3] = "r"
-                        b_l_rook_moved = 1
-                
-                board[clicked_row][clicked_col] = selected_piece
-                board[selected_row][selected_col] = " "
-                
-                #Promotion Logic
-                if selected_piece == "P":
-                    if clicked_row == 0:
-                        promo_options = ['q', 'n', 'r', 'b']
-                        print("q: queen\nn: knight\nr: rook\nb: bishop")
-                        inp = ''
-                        while inp.lower() not in promo_options:
-                            inp = input("Please select your choice: ")
-                        board[clicked_row][clicked_col] = inp.upper()
-                if selected_piece == "p":
-                    if clicked_row == 7:
-                        promo_options = ['q', 'n', 'r', 'b']
-                        print("q: queen\nn: knight\nr: rook\nb: bishop")
-                        inp = ''
-                        while inp.lower() not in promo_options:
-                            inp = input("Please select your choice: ")
-                        board[clicked_row][clicked_col] = inp.lower()
-                        
-                selected_board[selected_row][selected_col] = 0
-                highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-                
-                if selected_piece == "k": b_king_moved = 1
-                if selected_piece == "K": w_king_moved = 1
-                if selected_row == 7 and selected_col == 0: w_l_rook_moved = 1
-                if selected_row == 7 and selected_col == 7: w_r_rook_moved = 1
-                if selected_row == 0 and selected_col == 0: b_l_rook_moved = 1
-                if selected_row == 0 and selected_col == 7: b_r_rook_moved = 1
-                
-                selected_row = -1
-                selected_col = -1
-                selected_piece = ""
-                if turn == "w":
-                    b_en_passant = None
-                    turn = "b"
-                elif turn == "b":
-                    w_en_passant = None
-                    turn = "w"
-                turns += 1
-                mate = check_checkmate()
+        selected_board[selected_row][selected_col] = 0
+        highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+        
+        if selected_piece == "k": b_king_moved = 1
+        if selected_piece == "K": w_king_moved = 1
+        if selected_row == 7 and selected_col == 0: w_l_rook_moved = 1
+        if selected_row == 7 and selected_col == 7: w_r_rook_moved = 1
+        if selected_row == 0 and selected_col == 0: b_l_rook_moved = 1
+        if selected_row == 0 and selected_col == 7: b_r_rook_moved = 1
+        
+        selected_row = -1
+        selected_col = -1
+        selected_piece = ""
+        if turn == "w" and promotion == None:
+            b_en_passant = None
+            turn = "b"
+        elif turn == "b" and promotion == None:
+            w_en_passant = None
+            turn = "w"
+        turns += 1
+        mate = check_checkmate()
                 
 def draw_selected_overlay(screen: pygame.Surface):
     overlay = pygame.Surface((SQUARE_WIDTH, SQUARE_HEIGHT), pygame.SRCALPHA)
@@ -797,7 +830,6 @@ def draw_selected_overlay(screen: pygame.Surface):
         for c, v in enumerate(rank):
             if v:
                 screen.blit(overlay, (c*SQUARE_WIDTH, r*SQUARE_HEIGHT))
-                
                 
 def draw_highlighted_overlay(screen: pygame.Surface):
     for r, rank in enumerate(highlighted_board):
@@ -810,6 +842,11 @@ def draw_highlighted_overlay(screen: pygame.Surface):
                     overlay_image = pygame.transform.scale(overlay_image, (SQUARE_WIDTH, SQUARE_HEIGHT))
                     screen.blit(overlay_image, (c * SQUARE_WIDTH, r * SQUARE_HEIGHT))
 
+def draw_promo_overlay(screen: pygame.Surface):
+    if promotion != None:
+        overlay_image = pygame.image.load(resource_path('overlay/promooverlay.png')).convert_alpha()
+        overlay_image = pygame.transform.scale(overlay_image, (SQUARE_WIDTH*8, SQUARE_HEIGHT*8))
+        screen.blit(overlay_image, (0,0))
 def get_mate():
     global mate
     return mate
