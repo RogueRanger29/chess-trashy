@@ -2,7 +2,7 @@ import pygame
 import sys
 import time
 from helper import SIZE, FPS
-from board import draw_board, draw_pieces, set_click_state, move, draw_selected_overlay, draw_highlighted_overlay, get_mate
+from board import draw_board, draw_pieces, get_event, draw_selected_overlay, draw_highlighted_overlay, get_mate, draw_promo_overlay
 pygame.init()
 print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
 for i in range(3, 0, -1):
@@ -26,17 +26,18 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            click = True
+        else:
+            get_event(event)
+
 
     screen.fill((0, 0, 0, 0))
 
-    set_click_state(click)
-    move()
+
     draw_board(screen)
     draw_selected_overlay(screen)
     draw_highlighted_overlay(screen)
     draw_pieces(screen)
+    draw_promo_overlay(screen)
     window.blit(screen, (0, 0))
     mate = get_mate()
     pygame.display.flip()
