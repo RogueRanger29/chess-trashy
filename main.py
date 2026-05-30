@@ -1,22 +1,18 @@
 import pygame
 import sys
-import time
 from helper import SIZE, FPS
-from board import draw_board, draw_pieces, get_event, draw_selected_overlay, draw_highlighted_overlay, get_mate, draw_promo_overlay
-pygame.init()
-print("Please pay attention to this Terminal window as input for pawn promotion will begin here")
-for i in range(3, 0, -1):
-    print(i)
-    time.sleep(1)
+from board import draw_board, draw_pieces, get_event, draw_selected_overlay, draw_highlighted_overlay, get_mate, draw_promo_overlay, GameState, UIState
 
 print("Enjoy!")
 
-
-
+pygame.init()
 window = pygame.display.set_mode(SIZE)
 pygame.display.set_caption("Chess(not that great)")
 screen = pygame.Surface(SIZE, pygame.SRCALPHA)
 clock = pygame.time.Clock()
+
+gamestate = GameState()
+uistate = UIState()
 
 run = True
 
@@ -27,19 +23,19 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         else:
-            get_event(event)
+            get_event(event, gamestate, uistate)
 
 
     screen.fill((0, 0, 0, 0))
 
 
     draw_board(screen)
-    draw_selected_overlay(screen)
-    draw_highlighted_overlay(screen)
-    draw_pieces(screen)
-    draw_promo_overlay(screen)
+    draw_selected_overlay(screen, uistate)
+    draw_highlighted_overlay(screen, gamestate, uistate)
+    draw_pieces(screen, gamestate)
+    draw_promo_overlay(screen, gamestate)
     window.blit(screen, (0, 0))
-    mate = get_mate()
+    mate = get_mate(gamestate)
     pygame.display.flip()
     clock.tick(FPS)
     if mate != "":

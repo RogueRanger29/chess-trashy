@@ -2,106 +2,121 @@ import pygame
 import copy
 from helper import SQUARE_WIDTH, SQUARE_HEIGHT, LIGHT, DARK, DEFAULT_BOARD, resource_path
 
-board = copy.deepcopy(DEFAULT_BOARD)
-selected_board = [[0 for x in range(8)] for _ in range(8)]
-highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+class GameState:
+    def __init__(self):
+        self.board = copy.deepcopy(DEFAULT_BOARD)
+        #stats for castle
+        self.w_king_moved = 0
+        self.w_l_rook_moved = 0
+        self.w_r_rook_moved = 0
 
-selected_row = -1
-selected_col = -1
-selected_piece = ""
+        self.b_king_moved = 0
+        self.b_l_rook_moved = 0
+        self.b_r_rook_moved = 0
 
-#stats for castle
-w_king_moved = 0
-w_l_rook_moved = 0
-w_r_rook_moved = 0
+        self.turn = "w"
+        self.turns = 0
+        self.mate = ""
 
-b_king_moved = 0
-b_l_rook_moved = 0
-b_r_rook_moved = 0
+        self.w_en_passant = None
+        self.b_en_passant = None
 
-turn = "w"
-turns = 0
-mate = ""
+        self.promotion = None
 
-w_en_passant = None
-b_en_passant = None
+class UIState:
+    def __init__(self):
+        self.selected_board = [[0 for x in range(8)] for _ in range(8)]
+        self.highlighted_board = [[0 for x in range(8)] for _ in range(8)]
 
-promotion = None
+        self.selected_row = -1
+        self.selected_col = -1
+        self.selected_piece = ""
 
-def get_event(event: pygame.event.Event):
-    if promotion != None:
+    def clear(self):
+        self.selected_board = [[0 for _ in range(8)] for _ in range(8)]
+        self.highlighted_board = [[0 for _ in range(8)] for _ in range(8)]
+
+        self.selected_row = -1
+        self.selected_col = -1
+        self.selected_piece = ""
+
+    def deselect(self):
+        if self.selected_row != -1:
+            self.selected_board[self.selected_row][self.selected_col] = 0
+
+        self.highlighted_board = [[0 for _ in range(8)] for _ in range(8)]
+        self.selected_row = -1
+        self.selected_col = -1
+        self.selected_piece = ""
+def get_event(event: pygame.event.Event, gamestate: GameState, uistate: UIState):
+    if gamestate.promotion != None:
         if event.type == pygame.KEYDOWN:
             key = event.key
             if key == pygame.K_q:
-                handle_promotion("q")
+                handle_promotion("q", gamestate)
             if key == pygame.K_n:
-                handle_promotion("n")
+                handle_promotion("n", gamestate)
             if key == pygame.K_r:
-                handle_promotion("r")
+                handle_promotion("r", gamestate)
             if key == pygame.K_b:
-                handle_promotion("b")
+                handle_promotion("b", gamestate)
         return
     if event.type == pygame.MOUSEBUTTONDOWN:
         clicked_row = int(pygame.mouse.get_pos()[1]//SQUARE_HEIGHT)
         clicked_col = int(pygame.mouse.get_pos()[0]//SQUARE_WIDTH)
-        handle_selection(clicked_row, clicked_col)
+        handle_selection(clicked_row, clicked_col, gamestate, uistate)
     else:
         return
-def handle_selection(r, c):
-    global selected_row, selected_col, selected_piece, highlighted_board, selected_board
-    clicked_piece = board[r][c]
-    if selected_piece == "": #select piece if none selected
-        if clicked_piece != " " and colour(clicked_piece) == turn: #check that there is a piece there and its ur turn
-            selected_row = r
-            selected_col = c
-            selected_piece = clicked_piece
-            selected_board[r][c] = 1
-            highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-            for move in check_legal_moves(selected_row, selected_col):
-                highlighted_board[move[0]][move[1]] = 1
+def handle_selection(r, c, gamestate: GameState, uistate: UIState):
+    clicked_piece = gamestate.board[r][c]
+    if uistate.selected_piece == "": #select piece if none selected
+        if clicked_piece != " " and colour(clicked_piece) == gamestate.turn: #check that there is a piece there and its ur turn
+            uistate.selected_row = r
+            uistate.selected_col = c
+            uistate.selected_piece = clicked_piece
+            uistate.selected_board[r][c] = 1 
+            uistate.highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+            for move in check_legal_moves(uistate.selected_row, uistate.selected_col, gamestate):
+                uistate.highlighted_board[move[0]][move[1]] = 1
         return
     
-    if (r, c) == (selected_row, selected_col): #deselect piece
-        selected_board[selected_row][selected_col] = 0
-        highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-        selected_row = -1
-        selected_col = -1
-        selected_piece = ""
+    if (r, c) == (uistate.selected_row, uistate.selected_col): #deselect piece
+        uistate.deselect()
         return
             
-    if colour(clicked_piece) == turn and clicked_piece != " ": #change selection
-        selected_board[selected_row][selected_col] = 0
-        selected_row = r
-        selected_col = c
-        selected_piece = clicked_piece
-        selected_board[r][c] = 1
-        highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-        for move in check_legal_moves(selected_row, selected_col):
-            highlighted_board[move[0]][move[1]] = 1
+    if colour(clicked_piece) == gamestate.turn and clicked_piece != " ": #change selection
+        uistate.selected_board[uistate.selected_row][uistate.selected_col] = 0
+        uistate.selected_row = r
+        uistate.selected_col = c
+        uistate.selected_piece = clicked_piece
+        uistate.selected_board[r][c] = 1
+        uistate.highlighted_board = [[0 for x in range(8)] for _ in range(8)]
+        for move in check_legal_moves(uistate.selected_row, uistate.selected_col, gamestate):
+            uistate.highlighted_board[move[0]][move[1]] = 1
         return
     
-    try_move(r, c)
+    try_move(uistate.selected_row, uistate.selected_col, r, c, gamestate, uistate)
             
-def handle_promotion(choice: str):
-    global promotion, turn, turns, w_en_passant, b_en_passant, mate
-    if promotion == None:
+def handle_promotion(choice: str, gamestate: GameState):
+    if gamestate.promotion == None:
         return
-    p, r, c = promotion
+    p, r, c = gamestate.promotion
     if colour(p) == "w":
-        board[r][c] = choice.upper()
+        gamestate.board[r][c] = choice.upper()
     else:
-        board[r][c] = choice.lower()
+        gamestate.board[r][c] = choice.lower()
         
-    promotion = None
+    gamestate.promotion = None
     
-    if turn == "w" and promotion == None:
-        b_en_passant = None
-        turn = "b"
-    elif turn == "b" and promotion == None:
-        w_en_passant = None
-        turn = "w"
-    turns += 1
-    mate = check_checkmate()
+    if gamestate.turn == "w" and gamestate.promotion == None:
+        gamestate.b_en_passant = None
+        gamestate.turn = "b"
+    elif gamestate.turn == "b" and gamestate.promotion == None:
+        gamestate.w_en_passant = None
+        gamestate.turn = "w"
+    gamestate.turns += 1
+    gamestate.mate = check_checkmate(gamestate)
+    
 def draw_board(screen: pygame.Surface):    
     for row in range(8):
         for col in range(8):
@@ -113,11 +128,11 @@ def draw_board(screen: pygame.Surface):
             
             pygame.draw.rect(screen, color, square)
             
-def draw_pieces(screen: pygame.Surface):
+def draw_pieces(screen: pygame.Surface, gamestate: GameState):
     piece_width = SQUARE_WIDTH
     piece_height = SQUARE_HEIGHT
     piece_size = (piece_width, piece_height)
-    for row, rank in enumerate(board):
+    for row, rank in enumerate(gamestate.board):
         for col, piece in enumerate(rank):
             if piece != ' ':
                 if piece.isupper():
@@ -136,7 +151,8 @@ def colour(piece: str):
     return "w" if piece.isupper() else "b"
 
 
-def check_black_check(board):
+def check_black_check(gamestate: GameState):
+    board = gamestate.board
     br, bc = 0, 0
     for r, rank in enumerate(board):
         for c, p in enumerate(rank):
@@ -254,7 +270,8 @@ def check_black_check(board):
     
     return ""
 
-def check_white_check(board):
+def check_white_check(gamestate: GameState):
+    board = gamestate.board
     wr, wc = 0, 0
     for r, rank in enumerate(board):
         for c, p in enumerate(rank):
@@ -375,7 +392,19 @@ def check_white_check(board):
         
     return ""
 
-def check_legal_moves(r: int, c: int):
+def check_legal_moves(r: int, c: int, gamestate: GameState):
+    board = gamestate.board
+    w_en_passant = gamestate.w_en_passant
+    b_en_passant  = gamestate.b_en_passant
+    
+    w_king_moved = gamestate.w_king_moved
+    w_l_rook_moved = gamestate.w_l_rook_moved
+    w_r_rook_moved = gamestate.w_r_rook_moved
+    
+    b_king_moved = gamestate.b_king_moved
+    b_l_rook_moved = gamestate.b_l_rook_moved
+    b_r_rook_moved = gamestate.b_r_rook_moved
+    
     res = []
     p = board[r][c]
     #PAWN - TODO: En Passant
@@ -416,14 +445,14 @@ def check_legal_moves(r: int, c: int):
             if w_en_passant != None and r == 4 and abs(c-w_en_passant[1]) == 1:
                 temp.append(w_en_passant)
         for move in temp:
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)        
     #knight
     if p.lower() == "n":
@@ -441,14 +470,14 @@ def check_legal_moves(r: int, c: int):
                 continue
             if colour(board[move[0]][move[1]]) == colour(p): #ur own pieces
                 continue
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)
     #king
     if p.lower() == "k":
@@ -467,40 +496,40 @@ def check_legal_moves(r: int, c: int):
                 continue
             if colour(board[move[0]][move[1]]) == colour(p): #ur own pieces
                 continue
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)
         
         castle_moves = []
         if colour(p) == "w":
-            if w_king_moved == 0 and check_white_check(board) == "":
+            if w_king_moved == 0 and check_white_check(gamestate) == "":
                 if w_r_rook_moved == 0 and board[7][7] == "R" and (7,5) in res and board[7][6] == " ":
                     castle_moves.append((7,6))
                 if w_l_rook_moved == 0 and board[7][0] == "R" and (7,3) in res and board[7][2] == " " and board[7][1] == " ":
                     castle_moves.append((7, 2))
                     
         if colour(p) == "b":
-            if b_king_moved == 0 and check_black_check(board) == "":
+            if b_king_moved == 0 and check_black_check(gamestate) == "":
                 if b_r_rook_moved == 0 and board[0][7] == "r" and (0, 5) in res and board[0][6] == " ":
                     castle_moves.append((0, 6))
                 if b_l_rook_moved == 0 and board [0][0] == "r" and (0, 3) in res and board[0][2] == " " and board[0][1] == " ":
                     castle_moves.append((0, 2))
                     
         for move in castle_moves:
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)
     #rook
     if p.lower() == "r":
@@ -550,14 +579,14 @@ def check_legal_moves(r: int, c: int):
             temp.append((r-i, c))
             
         for move in temp:
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)
             
     #bishop
@@ -608,14 +637,14 @@ def check_legal_moves(r: int, c: int):
             temp.append((r-i, c+i))
             
         for move in temp:
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)
     
     #queen
@@ -710,143 +739,134 @@ def check_legal_moves(r: int, c: int):
             temp.append((r-i, c+i))
             
         for move in temp:
-            test_board = copy.deepcopy(board)
-            test_board[r][c] = " "
-            test_board[move[0]][move[1]] = p
+            test_state = copy.deepcopy(gamestate)
+            test_state.board[r][c] = " "
+            test_state.board[move[0]][move[1]] = p
             if colour(p) == "w":
-                if check_white_check(test_board) == "":
+                if check_white_check(test_state) == "":
                     res.append(move)
             if colour(p) == "b":
-                if check_black_check(test_board) == "":
+                if check_black_check(test_state) == "":
                     res.append(move)
     return res
 
-def check_white_moves():
+def check_white_moves(gamestate: GameState):
+    board = gamestate.board
     for r, rank in enumerate(board):
         for c, p in enumerate(rank):
             if colour(p) == "w":
-                if len(check_legal_moves(r, c)) != 0:
+                if len(check_legal_moves(r, c, gamestate)) != 0:
                     return True
     return False
 
-def check_black_moves():
+def check_black_moves(gamestate: GameState):
+    board = gamestate.board
     for r, rank in enumerate(board):
         for c, p in enumerate(rank):
             if colour(p) == "b":
-                if len(check_legal_moves(r, c)) != 0:
+                if len(check_legal_moves(r, c, gamestate)) != 0:
                     return True
     return False
 
-def check_checkmate():
-    if not(check_white_moves()) and check_white_check(board) == "w":
+def check_checkmate(gamestate: GameState):
+    if not(check_white_moves(gamestate)) and check_white_check(gamestate) == "w":
         return "w"
-    if not(check_black_moves()) and check_black_check(board) == "b":
+    if not(check_black_moves(gamestate)) and check_black_check(gamestate) == "b":
         return "b"
-    if turn == "w" and not check_white_moves():
+    if gamestate.turn == "w" and not check_white_moves(gamestate):
         return "d"
-    if turn == "b" and not check_black_moves():
+    if gamestate.turn == "b" and not check_black_moves(gamestate):
         return "d"
     return ""
  
-def try_move(r, c):
-    global selected_row, selected_col, selected_piece, turn, turns, w_king_moved, b_king_moved, w_l_rook_moved, w_r_rook_moved, b_l_rook_moved, b_r_rook_moved, mate, w_en_passant, b_en_passant, selected_board, highlighted_board, promotion  
+def try_move(fr, fc, tr, tc, gamestate: GameState, uistate: UIState): 
     #move
-    if (r, c) in check_legal_moves(selected_row, selected_col): #check whether its empty space there or opponent colour
+    piece = gamestate.board[fr][fc]
+    if (tr, tc) in check_legal_moves(fr, fc, gamestate):
         #Promotion Logic
-        if (selected_piece == "P" and r == 0) or (selected_piece == "p" and r == 7):
-            promotion = (selected_piece, r, c)
-            board[r][c] = selected_piece
-            board[selected_row][selected_col] = " "
+        if (piece == "P" and tr == 0) or (piece == "p" and tr == 7):
+            gamestate.promotion = (piece, tr, tc)
+            gamestate.board[tr][tc] = piece
+            gamestate.board[fr][fc] = " "
 
-            selected_row = -1
-            selected_col = -1
-            selected_piece = ""
-            selected_board = [[0 for _ in range(8)] for _ in range(8)]
-            highlighted_board = [[0 for _ in range(8)] for _ in range(8)]
+            uistate.clear()
             return
-        if selected_piece == "P":
-            if selected_row - r == 2:
-                w_en_passant = (r + 1, c)
-            if (r, c) == b_en_passant:
-                board[b_en_passant[0]+1][b_en_passant[1]] = " "
-        if selected_piece == "p":
-            if selected_row - r == -2:
-                b_en_passant = (r - 1, c)
-            if (r, c) == w_en_passant:
-                board[w_en_passant[0]-1][w_en_passant[1]] = " "
+        if piece == "P":
+            if fr - tr == 2:
+                gamestate.w_en_passant = (tr + 1, tc)
+            if (tr, tc) == gamestate.b_en_passant:
+                gamestate.board[gamestate.b_en_passant[0]+1][gamestate.b_en_passant[1]] = " "
+        if piece == "p":
+            if fr - tr == -2:
+                gamestate.b_en_passant = (tr - 1, tc)
+            if (tr, tc) == gamestate.w_en_passant:
+                gamestate.board[gamestate.w_en_passant[0]-1][gamestate.w_en_passant[1]] = " "
         
         
-        if selected_piece == "K":
-            if w_king_moved == 0 and (r, c) == (7, 6):
-                board[7][7] = " "
-                board[7][5] = "R"
-                w_r_rook_moved = 1
-            if w_king_moved == 0 and (r, c) == (7, 2):
-                board[7][0] = " "
-                board[7][3] = "R"
-                w_l_rook_moved = 1
-        if selected_piece == "k":
-            if b_king_moved == 0 and (r, c) == (0, 6):
-                board[0][7] = " "
-                board[0][5] = "r"
-                b_r_rook_moved = 1
-            if b_king_moved == 0 and (r, c) == (0, 2):
-                board[0][0] = " "
-                board[0][3] = "r"
-                b_l_rook_moved = 1
+        if piece == "K":
+            if gamestate.w_king_moved == 0 and (tr, tc) == (7, 6):
+                gamestate.board[7][7] = " "
+                gamestate.board[7][5] = "R"
+                gamestate.w_r_rook_moved = 1
+            if gamestate.w_king_moved == 0 and (tr, tc) == (7, 2):
+                gamestate.board[7][0] = " "
+                gamestate.board[7][3] = "R"
+                gamestate.w_l_rook_moved = 1
+        if piece == "k":
+            if gamestate.b_king_moved == 0 and (tr, tc) == (0, 6):
+                gamestate.board[0][7] = " "
+                gamestate.board[0][5] = "r"
+                gamestate.b_r_rook_moved = 1
+            if gamestate.b_king_moved == 0 and (tr, tc) == (0, 2):
+                gamestate.board[0][0] = " "
+                gamestate.board[0][3] = "r"
+                gamestate.b_l_rook_moved = 1
         
-        board[r][c] = selected_piece
-        board[selected_row][selected_col] = " "
+        gamestate.board[tr][tc] = piece
+        gamestate.board[fr][fc] = " "
         
+        if piece == "k": gamestate.b_king_moved = 1
+        if piece == "K": gamestate.w_king_moved = 1
+        if fr == 7 and fc == 0: gamestate.w_l_rook_moved = 1
+        if fr == 7 and fc == 7: gamestate.w_r_rook_moved = 1
+        if fr == 0 and fc == 0: gamestate.b_l_rook_moved = 1
+        if fr == 0 and fc == 7: gamestate.b_r_rook_moved = 1
         
+        uistate.clear()
+        if gamestate.turn == "w" and gamestate.promotion == None:
+            gamestate.b_en_passant = None
+            gamestate.turn = "b"
+        elif gamestate.turn == "b" and gamestate.promotion == None:
+            gamestate.w_en_passant = None
+            gamestate.turn = "w"
+        gamestate.turns += 1
+        gamestate.mate = check_checkmate(gamestate)
+        return True
+    return False
                 
-        selected_board[selected_row][selected_col] = 0
-        highlighted_board = [[0 for x in range(8)] for _ in range(8)]
-        
-        if selected_piece == "k": b_king_moved = 1
-        if selected_piece == "K": w_king_moved = 1
-        if selected_row == 7 and selected_col == 0: w_l_rook_moved = 1
-        if selected_row == 7 and selected_col == 7: w_r_rook_moved = 1
-        if selected_row == 0 and selected_col == 0: b_l_rook_moved = 1
-        if selected_row == 0 and selected_col == 7: b_r_rook_moved = 1
-        
-        selected_row = -1
-        selected_col = -1
-        selected_piece = ""
-        if turn == "w" and promotion == None:
-            b_en_passant = None
-            turn = "b"
-        elif turn == "b" and promotion == None:
-            w_en_passant = None
-            turn = "w"
-        turns += 1
-        mate = check_checkmate()
-                
-def draw_selected_overlay(screen: pygame.Surface):
+def draw_selected_overlay(screen: pygame.Surface, uistate: UIState):
     overlay = pygame.Surface((SQUARE_WIDTH, SQUARE_HEIGHT), pygame.SRCALPHA)
     overlay.fill((169, 123, 49, 191))
 
-    for r, rank in enumerate(selected_board):
+    for r, rank in enumerate(uistate.selected_board):
         for c, v in enumerate(rank):
             if v:
                 screen.blit(overlay, (c*SQUARE_WIDTH, r*SQUARE_HEIGHT))
-                
-def draw_highlighted_overlay(screen: pygame.Surface):
-    for r, rank in enumerate(highlighted_board):
+def draw_highlighted_overlay(screen: pygame.Surface, gamestate: GameState, uistate: UIState):
+    for r, rank in enumerate(uistate.highlighted_board):
         for c, v in enumerate(rank):
             if v:
-                if board[r][c] == " ":
+                if gamestate.board[r][c] == " ":
                     pygame.draw.circle(screen,(255, 0, 0), (c * SQUARE_WIDTH + SQUARE_WIDTH // 2, r * SQUARE_HEIGHT + SQUARE_HEIGHT // 2), SQUARE_WIDTH/7)
                 else:
                     overlay_image = pygame.image.load(resource_path('overlay/square.png')).convert_alpha()
                     overlay_image = pygame.transform.scale(overlay_image, (SQUARE_WIDTH, SQUARE_HEIGHT))
                     screen.blit(overlay_image, (c * SQUARE_WIDTH, r * SQUARE_HEIGHT))
 
-def draw_promo_overlay(screen: pygame.Surface):
-    if promotion != None:
+def draw_promo_overlay(screen: pygame.Surface, gamestate: GameState):
+    if gamestate.promotion != None:
         overlay_image = pygame.image.load(resource_path('overlay/promooverlay.png')).convert_alpha()
         overlay_image = pygame.transform.scale(overlay_image, (SQUARE_WIDTH*8, SQUARE_HEIGHT*8))
         screen.blit(overlay_image, (0,0))
-def get_mate():
-    global mate
-    return mate
+def get_mate(gamestate: GameState):
+    return gamestate.mate
